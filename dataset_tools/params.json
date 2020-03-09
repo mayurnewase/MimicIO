@@ -1,0 +1,4 @@
+{
+    "wav_bitrate" : 16000,
+    "cutoff_threshold" : 0.75
+}
