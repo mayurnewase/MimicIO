@@ -1,0 +1,1 @@
+curl -F "url=https://ec2-35-154-7-11.ap-south-1.compute.amazonaws.com" -F "certificate=@certificates/public.pem" https://api.telegram.org/bot1054401279:AAESaTfz5nNuI6pgn3zbsDoSkj7LROSV0Ec/setWebhook
