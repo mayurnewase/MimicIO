@@ -33,12 +33,12 @@ BOT_TOKEN = "1030183690:AAEawegpjKXjvmPl2KyFAPrynDuE8rFT0xc"
 from flask import Flask
 app = Flask(__name__)
 
-@app.route("/")
+@app.route("/", methods = ["POST"])
 def hello():
     return "Hello World!"
 
 if __name__ == "__main__":
-    app.run(ssl_context='adhoc')
+    app.run(host = "0.0.0.0", port = "443", ssl_context=('certificates/public.pem', 'certificates/private.key'))
 
 
 
