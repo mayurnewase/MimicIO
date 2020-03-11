@@ -14,31 +14,51 @@ user writes a text:
 """
 import os
 import shutil
-from flask import Flask
+from flask import Flask, request
 
-from telegram.ext import Updater
-from telegram.ext import CommandHandler, MessageHandler, Filters
+from telegram import Bot
+from telegram.ext import Dispatcher, CommandHandler, MessageHandler, Filters
+
 
 import logging
 logging.basicConfig(format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s', level = logging.INFO)
 
-arguments = None
-parameters = None
-predictor = None
+dispatcher = None
 audio_adapter = None
 application = Flask(__name__)
-
-BOT_TOKEN = "1030183690:AAEawegpjKXjvmPl2KyFAPrynDuE8rFT0xc"
 
 from flask import Flask
 app = Flask(__name__)
 
+BOT_TOKEN = "1054401279:AAESaTfz5nNuI6pgn3zbsDoSkj7LROSV0Ec"
+
+def setup_bot(token):
+    bot = Bot(BOT_TOKEN)
+    dispatcher = Dispatcher(bot, None, workers = 0)
+
+    #register handlers
+    start_handler = CommandHandler("start", handler_start)
+    dispatcher.add_handler(start_handler)
+
+    return dispatcher
+
+def handler_start():
+    return "hey"
+
+
 @app.route("/", methods = ["POST"])
-def hello():
-    return "Hello World!"
+def root_function():
+    msg = request.get_json()
+    print("msg is ", msg)
+
+    dispatcher.process_update(msg)
+    
 
 if __name__ == "__main__":
-    app.run(host = "0.0.0.0", port = "443", ssl_context=('certificates/public.pem', 'certificates/private.key'))
+    dispatcher = setup_bot(BOT_TOKEN)
+    
+
+    app.run(host = "0.0.0.0", port = "8080", ssl_context=('certificates/public.pem', 'certificates/private.key'), )
 
 
 
