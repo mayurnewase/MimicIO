@@ -14,6 +14,7 @@ user writes a text:
 """
 import os
 import shutil
+import json
 from flask import Flask, request
 
 from telegram import Bot
@@ -24,7 +25,7 @@ import logging
 logging.basicConfig(format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s', level = logging.INFO)
 
 dispatcher = None
-audio_adapter = None
+bot = None
 application = Flask(__name__)
 
 from flask import Flask
@@ -42,8 +43,8 @@ def setup_bot(token):
 
     return dispatcher
 
-def handler_start():
-    return "hey"
+def handler_start(update, context):
+    context.bot.send_message("got it buddy")
 
 
 @app.route("/", methods = ["POST"])
@@ -53,6 +54,7 @@ def root_function():
 
     dispatcher.process_update(msg)
     
+    return json.dumps({"message" : "success", "statusCode" : 200})
 
 if __name__ == "__main__":
     dispatcher = setup_bot(BOT_TOKEN)
