@@ -44,28 +44,27 @@ def setup_bot(token):
 
     return dispatcher
 
-def handler_start(update, context):
+def handler_start(bot, update):
     #global bot
-    print("START INVOKED")
-    update.bot.send_message(chat_id = context.effective_chat.id, text = "got it buddy")
+    print("type update and context ", type(update), type(update))
+    print("-----------------------START INVOKED------------------------------")
+    bot.send_message(chat_id = update.effective_chat.id, text = "yo")
 
 @app.route("/", methods = ["POST"])
 def root_function():
     global bot
-    msg = request.get_data()
+    msg = request.get_json()
     print("msg is ", msg)
-    decoded_msg = Update.de_json(json.loads(msg), bot)
+    decoded_msg = Update.de_json(msg, bot)
     print("decode msg is ", decoded_msg)
 
     dispatcher.process_update(decoded_msg)
-    
+
     return json.dumps({"message" : "success", "statusCode" : 200})
 
 if __name__ == "__main__":
     dispatcher = setup_bot(BOT_TOKEN)
-    
-
-    app.run(host = "0.0.0.0", port = "443", ssl_context=('certificates/public.pem', 'certificates/private.key'), debug=True)
+    app.run(host = "0.0.0.0", ssl_context=('certificates/public.pem', 'certificates/private.key'), debug=True)
 
 
 
