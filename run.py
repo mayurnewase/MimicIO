@@ -49,7 +49,6 @@ def handler_start(update, context):
     print("START INVOKED")
     update.bot.send_message(chat_id = context.effective_chat.id, text = "got it buddy")
 
-
 @app.route("/", methods = ["POST"])
 def root_function():
     global bot
