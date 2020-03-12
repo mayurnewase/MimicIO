@@ -12,6 +12,7 @@ user writes a text:
     send it to that user
     delete that audio file from server
 """
+
 import os
 import shutil
 import json
@@ -19,7 +20,6 @@ from flask import Flask, request
 
 from telegram import Bot, Update
 from telegram.ext import Dispatcher, CommandHandler, MessageHandler, Filters
-
 
 import logging
 logging.basicConfig(format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s', level = logging.INFO)
@@ -39,16 +39,20 @@ def setup_bot(token):
     dispatcher = Dispatcher(bot, None, workers = 0)
 
     #register handlers
-    start_handler = CommandHandler("start", handler_start)
+    start_handler = CommandHandler("start", start_callback)
+    text_handler = MessageHandler(Filters.text, text_callback)
+
     dispatcher.add_handler(start_handler)
+    dispatcher.add_handler(text_handler)
 
     return dispatcher
 
-def handler_start(bot, update):
-    #global bot
-    print("type update and context ", type(update), type(update))
-    print("-----------------------START INVOKED------------------------------")
+def start_callback(bot, update):
     bot.send_message(chat_id = update.effective_chat.id, text = "yo")
+
+def text_callback(bot, update):
+    #give to models
+    bot.send_message(chat_id = update.effective_chat.id, text = "got it")
 
 @app.route("/", methods = ["POST"])
 def root_function():
