@@ -11,6 +11,15 @@ user writes a text:
     create audio file
     send it to that user
     delete that audio file from server
+
+use threading for updater -> done
+make it git clone or docker container -> with secrets of bot_token, certificates
+push it to ecr if required
+use spot instances and fleet for atleast one alive with elastic ip
+
+use wsgi with multiprocess model
+add status endpoint to show system health
+add track endpoint to check status of current task -> queued, failed, success, uploading
 """
 
 import os
@@ -20,6 +29,8 @@ from flask import Flask, request
 
 from telegram import Bot, Update
 from telegram.ext import Dispatcher, CommandHandler, MessageHandler, Filters
+from queue import Queue
+from threading import Thread
 
 from synthesizer.inference import Synthesizer
 from encoder import inference as encoder
@@ -32,7 +43,7 @@ import pickle
 import logging
 logging.basicConfig(format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s', level = logging.INFO)
 
-dispatcher = None
+dispatcher_update_queue = None
 bot = None
 
 application = Flask(__name__)
@@ -71,7 +82,9 @@ def setup_bot(token):
     global encoder, synthesizer, vocoder
 
     bot = Bot(BOT_TOKEN)
-    dispatcher = Dispatcher(bot, None, workers = 0)
+    update_queue = Queue()
+
+    dispatcher = Dispatcher(bot, update_queue, workers = 1)
 
     #register handlers
     start_handler = CommandHandler("start", start_callback)
@@ -80,10 +93,13 @@ def setup_bot(token):
     dispatcher.add_handler(start_handler)
     dispatcher.add_handler(text_handler)
 
+    thread = Thread(target=dispatcher.start, name='dispatcher')
+    thread.start()
+
     embedding = load_embed()
     encoder, synthesizer, vocoder = load_models()
 
-    return dispatcher
+    return update_queue
 
 def start_callback(bot, update):
     bot.send_message(chat_id = update.effective_chat.id, text = "yo")
@@ -98,6 +114,7 @@ def text_callback(bot, update):
     wav = np.pad(wav, (0, synthesizer.sample_rate), mode = "constant")
     print("\n\n\n====================final wav shape ", wav.shape)
     librosa.output.write_wav(f"{output_path}{update.effective_chat.id}.wav", wav, sr = synthesizer.sample_rate)
+    bot.send_voice(chat_id = update.effective_chat.id, voice = open(f"{output_path}{update.effective_chat.id}.wav", "rb"), timeout = 100)
 
 @app.route("/", methods = ["POST"])
 def root_function():
@@ -106,12 +123,12 @@ def root_function():
     print("msg is ", msg)
     decoded_msg = Update.de_json(msg, bot)
 
-    dispatcher.process_update(decoded_msg)
+    dispatcher_update_queue.put(decoded_msg)
 
     return json.dumps({"message" : "success", "statusCode" : 200})
 
 if __name__ == "__main__":
-    dispatcher = setup_bot(BOT_TOKEN)
+    dispatcher_update_queue = setup_bot(BOT_TOKEN)
     app.run(host = "0.0.0.0", ssl_context=('certificates/public.pem', 'certificates/private.key'), debug=True)
 
 
