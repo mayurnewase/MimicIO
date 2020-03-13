@@ -14,9 +14,9 @@ def preprocess_librispeech(datasets_root: Path, out_dir: Path, n_processes: int,
                            skip_existing: bool, hparams):
     # Gather the input directories
     dataset_root = datasets_root.joinpath("LibriSpeech")
-    input_dirs = [dataset_root.joinpath("train-clean-100"), 
-                  dataset_root.joinpath("train-clean-360")]
+    input_dirs = [dataset_root.joinpath("train-clean-100")]
     print("\n    ".join(map(str, ["Using data from:"] + input_dirs)))
+
     assert all(input_dir.exists() for input_dir in input_dirs)
     
     # Create the output directories for each output file type
@@ -29,9 +29,12 @@ def preprocess_librispeech(datasets_root: Path, out_dir: Path, n_processes: int,
 
     # Preprocess the dataset
     speaker_dirs = list(chain.from_iterable(input_dir.glob("*") for input_dir in input_dirs))
+    print("speaker dirs in preprocess dataset ", speaker_dirs)
+
     func = partial(preprocess_speaker, out_dir=out_dir, skip_existing=skip_existing, 
                    hparams=hparams)
     job = Pool(n_processes).imap(func, speaker_dirs)
+
     for speaker_metadata in tqdm(job, "LibriSpeech", len(speaker_dirs), unit="speakers"):
         for metadatum in speaker_metadata:
             metadata_file.write("|".join(str(x) for x in metadatum) + "\n")
@@ -53,14 +56,17 @@ def preprocess_librispeech(datasets_root: Path, out_dir: Path, n_processes: int,
 
 def preprocess_speaker(speaker_dir, out_dir: Path, skip_existing: bool, hparams):
     metadata = []
+    print("utterrnces in speaker dir ", speaker_dir.glob("*"))
     for book_dir in speaker_dir.glob("*"):
         # Gather the utterance audios and texts
         try:
-            alignments_fpath = next(book_dir.glob("*.alignment.txt"))
+            alignments_fpath = next(book_dir.glob("*.alignment.txt")) 
             with alignments_fpath.open("r") as alignments_file:
                 alignments = [line.rstrip().split(" ") for line in alignments_file]
+            
         except StopIteration:
             # A few alignment files will be missing
+            print("missing")
             continue
         
         # Iterate over each entry in the alignments file
@@ -71,24 +77,39 @@ def preprocess_speaker(speaker_dir, out_dir: Path, skip_existing: bool, hparams)
             end_times = list(map(float, end_times.replace("\"", "").split(",")))
             
             # Process each sub-utterance
-            wavs, texts = split_on_silences(wav_fpath, words, end_times, hparams)
+            wavs, texts = split_on_silences(wav_fpath, words, end_times, hparams) #NOT NEEDED -> JUST OUTPUT NEEDED
             for i, (wav, text) in enumerate(zip(wavs, texts)):
                 sub_basename = "%s_%02d" % (wav_fname, i)
-                metadata.append(process_utterance(wav, text, out_dir, sub_basename, 
+                metadata.append(process_utterance(wav, text, out_dir, sub_basename, #SOME PARTS NEEDED
                                                   skip_existing, hparams))
     
     return [m for m in metadata if m is not None]
 
 
 def split_on_silences(wav_fpath, words, end_times, hparams):
+    """
+    wav_fpath: one single audio file of speaker
+    words: all words of that file from alignment file with empty string ("") on silence
+    end_times: timing info for that file from alignment file
+    hparams: audio processing params -> need to trace back this
+
+    load audio file -> reuired
+    find long pauses -> not required
+    remove noise from them and reattach them to origin wav -> not required
+    split sentense on pauses and return arrays of all sentenses with wav for those sentences -> required
+    """
+
     # Load the audio waveform
     wav, _ = librosa.load(wav_fpath, hparams.sample_rate)
     if hparams.rescale:
         wav = wav / np.abs(wav).max() * hparams.rescaling_max
-    
+
     words = np.array(words)
+
     start_times = np.array([0.0] + end_times[:-1])
     end_times = np.array(end_times)
+    print(f"words {words} start time {start_times} end time {end_times}")
+
     assert len(words) == len(end_times) == len(start_times)
     assert words[0] == "" and words[-1] == ""
     
@@ -135,6 +156,7 @@ def split_on_silences(wav_fpath, words, end_times, hparams):
     wavs = [wav[segment_time[0]:segment_time[1]] for segment_time in segment_times]
     texts = [" ".join(words[start + 1:end]).replace("  ", " ") for start, end in segments]
     
+    print(f"length of all wavs {len(wavs)} all texts {texts}")
     # # DEBUG: play the audio segments (run with -n=1)
     # import sounddevice as sd
     # if len(wavs) > 1:
@@ -165,7 +187,19 @@ def process_utterance(wav: np.ndarray, text: str, out_dir: Path, basename: str,
     # - Librosa pads the waveform before computing the mel spectrogram. Here, the waveform is saved
     #   without extra padding. This means that you won't have an exact relation between the length
     #   of the wav and of the mel spectrogram. See the vocoder data loader.
-    
+
+    """
+    wav: one wav file of one complete sentence from alignment file from split_on_silence function
+    text: text of that wav file
+    out_dir: where to save spcetro and audio in npy format
+    basename: name of file
+
+    skip existing if found -> required
+    skip if sentence too short -> not required
+    compute spectro -> required
+    skip if sentence too long -> not required
+    save spectro and audio -> required
+    """
     
     # Skip existing utterances if needed
     mel_fpath = out_dir.joinpath("mels", "mel-%s.npy" % basename)
@@ -178,16 +212,16 @@ def process_utterance(wav: np.ndarray, text: str, out_dir: Path, basename: str,
         return None
     
     # Compute the mel spectrogram
-    mel_spectrogram = audio.melspectrogram(wav, hparams).astype(np.float32)
+    mel_spectrogram = audio.melspectrogram(wav, hparams).astype(np.float32) #NEED THIS
     mel_frames = mel_spectrogram.shape[1]
     
-    # Skip utterances that are too long
+    # Skip utterances that are too long                                     #DONT NEED THIS
     if mel_frames > hparams.max_mel_frames and hparams.clip_mels_length:
         return None
     
     # Write the spectrogram, embed and audio to disk
-    np.save(mel_fpath, mel_spectrogram.T, allow_pickle=False)
-    np.save(wav_fpath, wav, allow_pickle=False)
+    np.save(mel_fpath, mel_spectrogram.T, allow_pickle=False)              #NEED THIS
+    np.save(wav_fpath, wav, allow_pickle=False)                            #NEED THIS
     
     # Return a tuple describing this training example
     return wav_fpath.name, mel_fpath.name, "embed-%s.npy" % basename, len(wav), mel_frames, text
@@ -206,6 +240,12 @@ def embed_utterance(fpaths, encoder_model_fpath):
     
  
 def create_embeddings(synthesizer_root: Path, encoder_model_fpath: Path, n_processes: int):
+    """
+    read meatdata file which was created by synthesizer preprocess audio
+    load encoder model
+    and make embeddings for all audios
+    """
+
     wav_dir = synthesizer_root.joinpath("audio")
     metadata_fpath = synthesizer_root.joinpath("train.txt")
     assert wav_dir.exists() and metadata_fpath.exists()

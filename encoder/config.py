@@ -14,7 +14,8 @@ librispeech_datasets = {
 }
 libritts_datasets = {
     "train": {
-        "clean": ["LibriTTS/train-clean-100", "LibriTTS/train-clean-360"],
+        #"clean": ["LibriTTS/train-clean-100", "LibriTTS/train-clean-360"],
+        "clean": ["LibriTTS/train-clean-100"],
         "other": ["LibriTTS/train-other-500"]
     },
     "test": {
@@ -41,5 +42,7 @@ other_datasets = [
     "LJSpeech-1.1",
     "VCTK-Corpus/wav48",
 ]
+
+#rick_morty_datset = {}
 
 anglophone_nationalites = ["australia", "canada", "ireland", "uk", "usa"]
