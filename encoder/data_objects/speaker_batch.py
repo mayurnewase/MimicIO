@@ -10,3 +10,4 @@ class SpeakerBatch:
         # Array of shape (n_speakers * n_utterances, n_frames, mel_n), e.g. for 3 speakers with
         # 4 utterances each of 160 frames of 40 mel coefficients: (12, 160, 40)
         self.data = np.array([frames for s in speakers for _, frames, _ in self.partials[s]])
+        #print("speaker batch shape ", self.data.shape)

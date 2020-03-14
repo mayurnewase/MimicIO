@@ -52,6 +52,7 @@ class DatasetLog:
         
 def _init_preprocess_dataset(dataset_name, datasets_root, out_dir) -> (Path, DatasetLog):
     dataset_root = datasets_root.joinpath(dataset_name)
+    print("datset root ", dataset_root)
     if not dataset_root.exists():
         print("Couldn\'t find %s, skipping this dataset." % dataset_root)
         return None, None
@@ -119,7 +120,7 @@ def _preprocess_speaker_dirs(speaker_dirs, dataset_name, datasets_root, out_dir,
 
 
 def preprocess_librispeech(datasets_root: Path, out_dir: Path, skip_existing=False):
-    for dataset_name in librispeech_datasets["train"]["other"]:
+    for dataset_name in librispeech_datasets["train"]["clean"]:
         # Initialize the preprocessing
         dataset_root, logger = _init_preprocess_dataset(dataset_name, datasets_root, out_dir)
         if not dataset_root:
