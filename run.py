@@ -54,9 +54,9 @@ app = Flask(__name__)
 BOT_TOKEN = "1054401279:AAESaTfz5nNuI6pgn3zbsDoSkj7LROSV0Ec"
 
 #encoder_path = "/home/mayur/projects/Real-Time-Voice-Cloning/encoder/saved_models/pretrained.pt"
-synthesizer_path = "/home/mayur/projects/Real-Time-Voice-Cloning/synthesizer/saved_models/logs-pretrained/taco_pretrained"
-vocoder_path = "/home/mayur/projects/Real-Time-Voice-Cloning/vocoder/saved_models/pretrained/pretrained.pt"
-embedding_path = "/home/mayur/projects/Resemblyzer/audio_data/rick_90_morty_50.pkl"
+synthesizer_path = "./synthesizer/saved_models/logs-pretrained/taco_pretrained"
+vocoder_path = "./vocoder/saved_models/pretrained/pretrained.pt"
+embedding_path = "./rick_90_morty_30.pkl"
 output_path = "./"
 
 def load_embed():    
