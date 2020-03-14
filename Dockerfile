@@ -9,5 +9,5 @@ RUN pip3 install torch==1.4.0+cpu torchvision==0.5.0+cpu -f https://download.pyt
 
 ADD . /mimicio
 
-#EXPOSE 5000
+EXPOSE 5000
 ENTRYPOINT ["python3", "run.py"]

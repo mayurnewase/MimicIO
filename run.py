@@ -13,7 +13,7 @@ user writes a text:
     delete that audio file from server
 
 use threading for updater -> done
-make it git clone or docker container -> with secrets of bot_token, certificates
+make it git clone or docker container -> with secrets of bot_token, certificates -> done
 push it to ecr if required
 use spot instances and fleet for atleast one alive with elastic ip
 
