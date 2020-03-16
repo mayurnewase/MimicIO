@@ -14,8 +14,8 @@ user writes a text:
 
 use threading for updater -> done
 make it git clone or docker container -> with secrets of bot_token, certificates -> done
-push it to ecr if required
-use spot instances and fleet for atleast one alive with elastic ip
+push it to ecr/dockerhub if required -> done
+use spot instances and fleet for atleast one alive with elastic ip -> 
 
 use wsgi with multiprocess model
 add status endpoint to show system health
