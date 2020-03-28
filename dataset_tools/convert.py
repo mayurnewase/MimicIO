@@ -1,4 +1,6 @@
 from resemblyzer import preprocess_wav, VoiceEncoder
+from resemblyzer.audio import preprocess_wav
+
 from pathlib import Path
 import subprocess
 import json
@@ -9,6 +11,7 @@ import librosa
 import re
 import datetime
 import operator
+import soundfile as sf
 
 def list_all_files(path: Path, pattern):
     return list(path.glob(pattern))
@@ -51,7 +54,12 @@ def save_wav(array, path, sampling_rate):
     print("saving in ", path)
     dir_path = path.parents[0]
     dir_path.mkdir(exist_ok = True, parents = True)
-    librosa.output.write_wav(path, array.astype(np.float32), sr = sampling_rate)
+    print("--------saving wav at ", sampling_rate)
+    #array = preprocess_wav(array, source_sr = sampling_rate)
+    #array = (array * np.iinfo(np.int16).max).astype(np.int16)
+    print("----audio type ", type(array))
+    sf.write(path, array, sampling_rate, subtype='PCM_16')
+    #librosa.output.write_wav(path, array, sr = sampling_rate)
 
 def isolate_voice(audio_file_path: Path, embed_path: Path, params_path: Path, output_path: Path):
     """

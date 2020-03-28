@@ -15,7 +15,12 @@ user writes a text:
 use threading for updater -> done
 make it git clone or docker container -> with secrets of bot_token, certificates -> done
 push it to ecr/dockerhub if required -> done
-use spot instances and fleet for atleast one alive with elastic ip -> 
+use spot instances and fleet for atleast one alive with elastic ip -> done
+
+improve models quality:
+    make rick data for synthesizer, vocoder
+    overfit on it
+    check and improve
 
 use wsgi with multiprocess model
 add status endpoint to show system health
@@ -105,14 +110,11 @@ def start_callback(bot, update):
     bot.send_message(chat_id = update.effective_chat.id, text = "yo")
 
 def text_callback(bot, update):
-    #global embedding
-    #give to models
-    print("\n\n\n\n update is ", update)
-    print("\n\n\n\n bot is ", bot)
+    
     spectrogram = synthesizer.synthesize_spectrograms([update.message.text], [embedding])
     wav = vocoder.infer_waveform(spectrogram[0])
     wav = np.pad(wav, (0, synthesizer.sample_rate), mode = "constant")
-    print("\n\n\n====================final wav shape ", wav.shape)
+    
     librosa.output.write_wav(f"{output_path}{update.effective_chat.id}.wav", wav, sr = synthesizer.sample_rate)
     bot.send_voice(chat_id = update.effective_chat.id, voice = open(f"{output_path}{update.effective_chat.id}.wav", "rb"), timeout = 100)
 
