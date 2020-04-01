@@ -41,7 +41,7 @@ def main():
     elif args.process == "preprocess_training_data":
         #convert textgrid for training model
         result = preprocess_training_data(args.input_path, args.output_path)
-        
+        #python3 preprocess.py --process=preprocess_training_data --input_path="/home/mayur/projects/datasets/rick_morty_aligned/R" --output_path="/home/mayur/projects/datasets/rick_morty_training_data"
 
 if __name__ == "__main__":
     main()

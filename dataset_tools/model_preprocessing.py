@@ -88,12 +88,13 @@ def preprocess_training_data(input_path, output_path):
         
         output_file.write(input_textgrid_file.stem)
         
-        output_file.write("\n")
+        output_file.write(" ")
 
         output_file.write("\"")
         
         text_string = ""
         for index in range(len(text)):
+
             t = text[index]
             text_string += t if t != '""' else ""
             if index != len(text) - 1:
